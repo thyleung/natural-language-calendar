@@ -1,22 +1,50 @@
 import type { ParsedDraft } from "@/types";
 import { addDays, addWeeks, nextDayOfWeek, setTimeFromKeyword } from "./dateUtils";
 
-export function parseCommand(input: string): ParsedDraft {
+/**
+ * parseCommandRuleBased — keyword-heuristic parser (no LLM).
+ */
+export function parseCommandRuleBased(input: string): ParsedDraft {
   const text = input.trim();
   const lower = text.toLowerCase();
 
+  // ── Title ────────────────────────────────────────────────────────────────
   const title = extractTitle(text);
 
+  // ── Date ─────────────────────────────────────────────────────────────────
   const date = extractDate(lower);
 
+  // ── Time ─────────────────────────────────────────────────────────────────
   const time = extractTime(lower);
 
+  // ── Duration ─────────────────────────────────────────────────────────────
   const duration = extractDuration(lower);
 
+  // ── Notes ─────────────────────────────────────────────────────────────────
   const notes = `Parsed from: "${text}"`;
 
-  return { title, date, time, duration, notes };
+  // ── Assumptions ──────────────────────────────────────────────────────────
+  const assumptions: string[] = [];
+  if (!/\b(today|tomorrow|next|this|in\s+\d)/i.test(lower))
+    assumptions.push("No date found — defaulting to tomorrow");
+  if (!/\bat\s+\d|morning|afternoon|evening|noon|lunch|breakfast/i.test(lower))
+    assumptions.push("No time found — defaulting to 09:00");
+  if (!/\bfor\s+\d+\s+(hour|min)/i.test(lower))
+    assumptions.push("No duration found — defaulting to 60 min");
+
+  return {
+    title,
+    date,
+    time,
+    duration,
+    notes,
+    source: "rule-based",
+    confidence: assumptions.length === 0 ? 0.9 : assumptions.length === 1 ? 0.7 : 0.5,
+    assumptions,
+  };
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function extractTitle(text: string): string {
   // Strip leading verbs ("create", "add", "schedule", "book", "set up", "remind me to")
@@ -98,6 +126,8 @@ function extractDuration(lower: string): number {
 
   return 60; // default 1 hour
 }
+
+// ── Micro-utils ────────────────────────────────────────────────────────────
 
 function toISODate(d: Date): string {
   return d.toISOString().slice(0, 10);

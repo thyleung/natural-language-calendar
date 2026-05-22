@@ -1,0 +1,717 @@
+[
+  {
+    "category": "explicit_date",
+    "input": "Schedule a dentist appointment on June 15th at 2pm",
+    "expected": {
+      "title": "Dentist appointment",
+      "dateInterpretation": "June 15th of the current year",
+      "timeInterpretation": "14:00",
+      "durationMinutes": 60,
+      "assumptions": ["Year assumed to be current year", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Fully specified input. Both parsers should agree."
+  },
+  {
+    "category": "explicit_date",
+    "input": "Book a team lunch on March 3rd at noon for 90 minutes",
+    "expected": {
+      "title": "Team lunch",
+      "dateInterpretation": "March 3rd of the current year",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 90,
+      "assumptions": ["Year assumed to be current year"]
+    },
+    "difficulty": "easy",
+    "notes": "All fields explicit. Strong baseline test."
+  },
+  {
+    "category": "explicit_date",
+    "input": "Add a meeting on 2025-08-20 at 10:30am for 45 minutes",
+    "expected": {
+      "title": "Meeting",
+      "dateInterpretation": "2025-08-20",
+      "timeInterpretation": "10:30",
+      "durationMinutes": 45,
+      "assumptions": []
+    },
+    "difficulty": "easy",
+    "notes": "ISO date format. Parser should handle both ISO and natural date formats."
+  },
+  {
+    "category": "explicit_date",
+    "input": "Remind me about the board presentation on December 1st at 9am",
+    "expected": {
+      "title": "Board presentation",
+      "dateInterpretation": "December 1st of the current year",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["Year assumed to be current year", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Tests title extraction with 'remind me about' prefix."
+  },
+  {
+    "category": "explicit_date",
+    "input": "Set up a call on the 5th at 3pm",
+    "expected": {
+      "title": "Call",
+      "dateInterpretation": "5th of the current month",
+      "timeInterpretation": "15:00",
+      "durationMinutes": 60,
+      "assumptions": ["Month assumed to be current month", "Year assumed to be current year", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "medium",
+    "notes": "Partial date — day only. Rule-based likely misses month context; LLM should infer current month."
+  },
+  {
+    "category": "relative_date",
+    "input": "Schedule a grooming appointment for Sophie in 2 weeks",
+    "expected": {
+      "title": "Grooming appointment for Sophie",
+      "dateInterpretation": "Today + 14 days",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["Time defaulted to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Reference input from the app spec. Both parsers should handle 'in 2 weeks'."
+  },
+  {
+    "category": "relative_date",
+    "input": "Create a haircut appointment in 10 days at 11am",
+    "expected": {
+      "title": "Haircut appointment",
+      "dateInterpretation": "Today + 10 days",
+      "timeInterpretation": "11:00",
+      "durationMinutes": 60,
+      "assumptions": ["Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Numeric day offset with explicit time."
+  },
+  {
+    "category": "relative_date",
+    "input": "Book a flight check-in reminder in 3 days",
+    "expected": {
+      "title": "Flight check-in reminder",
+      "dateInterpretation": "Today + 3 days",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["Time defaulted to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Relative date, no time. Common reminder pattern."
+  },
+  {
+    "category": "relative_date",
+    "input": "Schedule a vet appointment for Luna a month from now",
+    "expected": {
+      "title": "Vet appointment for Luna",
+      "dateInterpretation": "Today + ~30 days",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["'A month' interpreted as 30 days", "Time defaulted to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "medium",
+    "notes": "'A month from now' is ambiguous — could mean same day next calendar month or +30 days. Parsers likely differ."
+  },
+  {
+    "category": "relative_date",
+    "input": "Add a review meeting in a week at 2pm for an hour",
+    "expected": {
+      "title": "Review meeting",
+      "dateInterpretation": "Today + 7 days",
+      "timeInterpretation": "14:00",
+      "durationMinutes": 60,
+      "assumptions": []
+    },
+    "difficulty": "easy",
+    "notes": "'In a week' = +7 days. All fields inferable."
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "lunch friday",
+    "expected": {
+      "title": "Lunch",
+      "dateInterpretation": "The coming Friday (could be this Friday or next Friday depending on current day)",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 60,
+      "assumptions": ["'Friday' assumed to mean the next upcoming Friday", "Time inferred from 'lunch' keyword", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "hard",
+    "notes": "Classic ambiguity: if today is Thursday, 'friday' is tomorrow. If today is Saturday, 'friday' is 6 days away. No 'next' or 'this' qualifier."
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "lunch this friday",
+    "expected": {
+      "title": "Lunch",
+      "dateInterpretation": "The Friday of the current week",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 60,
+      "assumptions": ["'This Friday' interpreted as Friday within current week", "Time inferred from 'lunch' keyword", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "medium",
+    "notes": "'This' signals the current week's Friday. Still ambiguous if run on a Saturday — does 'this friday' mean yesterday or next week?"
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "next friday lunch",
+    "expected": {
+      "title": "Lunch",
+      "dateInterpretation": "The Friday of next week (7+ days away)",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 60,
+      "assumptions": ["'Next Friday' interpreted as the Friday of next week, not the nearest Friday", "Time inferred from 'lunch'", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "medium",
+    "notes": "'Next friday' vs 'this friday' — humans disagree on whether 'next friday' means the coming Friday or the one after. Strong parser differentiator."
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "gym monday",
+    "expected": {
+      "title": "Gym",
+      "dateInterpretation": "The next upcoming Monday",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["'Monday' assumed to mean next upcoming Monday", "Time defaulted to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "medium",
+    "notes": "Bare weekday with no qualifier. Rule-based and LLM will likely apply different default logic."
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "coffee with Alex sometime next week",
+    "expected": {
+      "title": "Coffee with Alex",
+      "dateInterpretation": "Midpoint of next week (Wednesday)",
+      "timeInterpretation": "10:00",
+      "durationMinutes": 60,
+      "assumptions": ["'Sometime next week' is vague — defaulted to Wednesday", "Time defaulted to morning coffee time", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "hard",
+    "notes": "'Sometime' makes this inherently unresolvable to a single date. Any parser must pick an arbitrary day. Good test of how parsers handle deliberate vagueness."
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "standup every monday at 9am",
+    "expected": {
+      "title": "Standup",
+      "dateInterpretation": "Next upcoming Monday",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 30,
+      "assumptions": ["Recurring 'every monday' treated as single next occurrence", "Duration inferred from standup context as 30 min"]
+    },
+    "difficulty": "medium",
+    "notes": "Recurring language but treated as single event. Tests whether parser flags recurrence vs silently drops it."
+  },
+  {
+    "category": "missing_time",
+    "input": "Dentist appointment next Tuesday",
+    "expected": {
+      "title": "Dentist appointment",
+      "dateInterpretation": "The Tuesday of next week",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["Time defaulted to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Date is clear, time is missing. Tests default time fallback."
+  },
+  {
+    "category": "missing_time",
+    "input": "Call mom",
+    "expected": {
+      "title": "Call mom",
+      "dateInterpretation": "Today or tomorrow (no date signal)",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 30,
+      "assumptions": ["No date found — defaulted to tomorrow", "Time defaulted to 09:00", "Duration guessed as 30 min for a phone call"]
+    },
+    "difficulty": "medium",
+    "notes": "Minimal input. No date or time. Tests pure defaults. LLM may infer 30 min for a call; rule-based will likely default to 60 min."
+  },
+  {
+    "category": "missing_time",
+    "input": "Team offsite on Thursday",
+    "expected": {
+      "title": "Team offsite",
+      "dateInterpretation": "The next upcoming Thursday",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 480,
+      "assumptions": ["Time defaulted to 09:00", "Duration guessed as full day (480 min) for an offsite"]
+    },
+    "difficulty": "medium",
+    "notes": "'Offsite' implies a full-day event. LLM should catch this; rule-based will default to 60 min. Good differentiator."
+  },
+  {
+    "category": "missing_time",
+    "input": "Dentist next month",
+    "expected": {
+      "title": "Dentist",
+      "dateInterpretation": "First weekday of next month",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["'Next month' resolved to first weekday of next calendar month", "Time defaulted to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "medium",
+    "notes": "'Next month' is vague — no specific day. Parsers must pick a day within next month."
+  },
+  {
+    "category": "missing_time",
+    "input": "Pick up prescription tomorrow",
+    "expected": {
+      "title": "Pick up prescription",
+      "dateInterpretation": "Tomorrow",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 15,
+      "assumptions": ["Time defaulted to 09:00", "Duration guessed as 15 min for a pickup errand"]
+    },
+    "difficulty": "easy",
+    "notes": "Short errand. LLM should infer short duration; rule-based defaults to 60 min."
+  },
+  {
+    "category": "missing_time",
+    "input": "Budget review meeting next Wednesday",
+    "expected": {
+      "title": "Budget review meeting",
+      "dateInterpretation": "The Wednesday of next week",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["Time defaulted to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Fully specified except time. Clean missing-time baseline."
+  },
+  {
+    "category": "missing_time",
+    "input": "Yoga class on Saturday",
+    "expected": {
+      "title": "Yoga class",
+      "dateInterpretation": "The next upcoming Saturday",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["Time defaulted to 09:00", "Duration defaulted to 60 min — yoga typically 60-90 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Context could suggest morning time; LLM might pick 08:00 or 09:00."
+  },
+  {
+    "category": "missing_time",
+    "input": "Dinner with parents on Sunday",
+    "expected": {
+      "title": "Dinner with parents",
+      "dateInterpretation": "The next upcoming Sunday",
+      "timeInterpretation": "18:00",
+      "durationMinutes": 90,
+      "assumptions": ["Time inferred from 'dinner' keyword as ~18:00", "Duration guessed as 90 min for a family dinner"]
+    },
+    "difficulty": "medium",
+    "notes": "'Dinner' implies evening. LLM should infer ~18:00; rule-based may default to 09:00 if 'dinner' keyword isn't handled."
+  },
+  {
+    "category": "missing_time",
+    "input": "Haircut after work",
+    "expected": {
+      "title": "Haircut",
+      "dateInterpretation": "Today or tomorrow (no date signal)",
+      "timeInterpretation": "17:30",
+      "durationMinutes": 45,
+      "assumptions": ["'After work' interpreted as ~17:30", "No date found — defaulted to tomorrow", "Duration guessed as 45 min for a haircut"]
+    },
+    "difficulty": "hard",
+    "notes": "'After work' is context-dependent. Parsers must interpret this as late afternoon. Strong LLM vs rule-based differentiator."
+  },
+  {
+    "category": "missing_time",
+    "input": "Morning run",
+    "expected": {
+      "title": "Morning run",
+      "dateInterpretation": "Tomorrow (no date signal)",
+      "timeInterpretation": "07:00",
+      "durationMinutes": 45,
+      "assumptions": ["No date found — defaulted to tomorrow", "'Morning' resolved to 07:00", "Duration guessed as 45 min for a run"]
+    },
+    "difficulty": "medium",
+    "notes": "'Morning' is present but ambiguous — 06:00? 07:00? 09:00? Convention varies."
+  },
+  {
+    "category": "vague_duration",
+    "input": "Quick catch-up with Sarah tomorrow at 3pm",
+    "expected": {
+      "title": "Catch-up with Sarah",
+      "dateInterpretation": "Tomorrow",
+      "timeInterpretation": "15:00",
+      "durationMinutes": 30,
+      "assumptions": ["'Quick' interpreted as 30 min"]
+    },
+    "difficulty": "medium",
+    "notes": "'Quick' implies short. Rule-based will likely default to 60 min; LLM should infer 15–30 min."
+  },
+  {
+    "category": "vague_duration",
+    "input": "Long strategy session with the leadership team on Friday morning",
+    "expected": {
+      "title": "Strategy session with leadership team",
+      "dateInterpretation": "The next upcoming Friday",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 180,
+      "assumptions": ["'Long' interpreted as 3 hours", "'Morning' resolved to 09:00"]
+    },
+    "difficulty": "hard",
+    "notes": "'Long' is highly subjective — 2h? 3h? 4h? Both parsers will guess differently."
+  },
+  {
+    "category": "vague_duration",
+    "input": "Dinner tonight",
+    "expected": {
+      "title": "Dinner",
+      "dateInterpretation": "Today",
+      "timeInterpretation": "19:00",
+      "durationMinutes": 90,
+      "assumptions": ["'Dinner' interpreted as ~19:00", "Duration guessed as 90 min"]
+    },
+    "difficulty": "medium",
+    "notes": "No explicit duration. 'Dinner' implies ~90 min socially but rule-based won't know this."
+  },
+  {
+    "category": "vague_duration",
+    "input": "meeting in 30 minutes",
+    "expected": {
+      "title": "Meeting",
+      "dateInterpretation": "Today, current time + 30 minutes",
+      "timeInterpretation": "Current time + 30 min",
+      "durationMinutes": 60,
+      "assumptions": ["'In 30 minutes' interpreted as start time offset from now, not duration", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "hard",
+    "notes": "Critical ambiguity: 'in 30 minutes' means START TIME, not duration. Both parsers may misread this as duration."
+  },
+  {
+    "category": "appointments",
+    "input": "Book a physio appointment next Monday at 10am for an hour",
+    "expected": {
+      "title": "Physio appointment",
+      "dateInterpretation": "The Monday of next week",
+      "timeInterpretation": "10:00",
+      "durationMinutes": 60,
+      "assumptions": []
+    },
+    "difficulty": "easy",
+    "notes": "Fully specified appointment. Strong baseline."
+  },
+  {
+    "category": "appointments",
+    "input": "Eye exam on the 22nd at 2:30pm",
+    "expected": {
+      "title": "Eye exam",
+      "dateInterpretation": "22nd of the current month",
+      "timeInterpretation": "14:30",
+      "durationMinutes": 60,
+      "assumptions": ["Month assumed to be current month", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "Partial date with explicit time."
+  },
+  {
+    "category": "appointments",
+    "input": "Therapy session every other Thursday at 5pm",
+    "expected": {
+      "title": "Therapy session",
+      "dateInterpretation": "Next upcoming Thursday",
+      "timeInterpretation": "17:00",
+      "durationMinutes": 60,
+      "assumptions": ["Recurring 'every other Thursday' treated as single next occurrence", "Recurrence pattern not stored"]
+    },
+    "difficulty": "medium",
+    "notes": "Biweekly recurrence. Parser should flag it cannot store recurrence and treat as single event."
+  },
+  {
+    "category": "meetings",
+    "input": "Add team standup next Monday at 9am for 30 minutes",
+    "expected": {
+      "title": "Team standup",
+      "dateInterpretation": "The Monday of next week",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 30,
+      "assumptions": []
+    },
+    "difficulty": "easy",
+    "notes": "Fully specified. Reference input from the app spec."
+  },
+  {
+    "category": "meetings",
+    "input": "1:1 with manager Wednesday at 4",
+    "expected": {
+      "title": "1:1 with manager",
+      "dateInterpretation": "The next upcoming Wednesday",
+      "timeInterpretation": "16:00",
+      "durationMinutes": 60,
+      "assumptions": ["'4' interpreted as 4pm (16:00) due to meeting context", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "medium",
+    "notes": "'At 4' — AM or PM? Meeting context suggests PM. Tests AM/PM inference without explicit marker."
+  },
+  {
+    "category": "meetings",
+    "input": "Product demo call with client on Thursday at 11",
+    "expected": {
+      "title": "Product demo call with client",
+      "dateInterpretation": "The next upcoming Thursday",
+      "timeInterpretation": "11:00",
+      "durationMinutes": 60,
+      "assumptions": ["'11' interpreted as 11:00 AM", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "easy",
+    "notes": "'At 11' — clearly AM. No ambiguity."
+  },
+  {
+    "category": "personal_tasks",
+    "input": "Remind me to call the bank tomorrow morning",
+    "expected": {
+      "title": "Call the bank",
+      "dateInterpretation": "Tomorrow",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 30,
+      "assumptions": ["'Morning' resolved to 09:00", "Duration guessed as 30 min for a phone call"]
+    },
+    "difficulty": "easy",
+    "notes": "'Remind me to' prefix should be stripped. Standard reminder pattern."
+  },
+  {
+    "category": "personal_tasks",
+    "input": "Pick up kids from school on Friday at 3:15pm",
+    "expected": {
+      "title": "Pick up kids from school",
+      "dateInterpretation": "The next upcoming Friday",
+      "timeInterpretation": "15:15",
+      "durationMinutes": 30,
+      "assumptions": ["Duration guessed as 30 min for pickup"]
+    },
+    "difficulty": "easy",
+    "notes": "Non-round time (3:15). Tests minute parsing."
+  },
+  {
+    "category": "personal_tasks",
+    "input": "anniversary dinner",
+    "expected": {
+      "title": "Anniversary dinner",
+      "dateInterpretation": "Unknown — no date signal",
+      "timeInterpretation": "19:00",
+      "durationMinutes": 120,
+      "assumptions": ["No date found — defaulted to tomorrow", "'Dinner' resolved to 19:00", "Duration guessed as 120 min for anniversary dinner"]
+    },
+    "difficulty": "hard",
+    "notes": "Extremely minimal input. No date, time, or duration. Parser has almost nothing to work with."
+  },
+  {
+    "category": "recurring_language",
+    "input": "Weekly team sync on Mondays at 10am",
+    "expected": {
+      "title": "Weekly team sync",
+      "dateInterpretation": "Next upcoming Monday",
+      "timeInterpretation": "10:00",
+      "durationMinutes": 60,
+      "assumptions": ["Recurring weekly pattern not stored — treated as single next occurrence"]
+    },
+    "difficulty": "medium",
+    "notes": "Tests whether parser flags recurrence or silently drops it."
+  },
+  {
+    "category": "recurring_language",
+    "input": "Remind me every Friday at 4pm to submit timesheets",
+    "expected": {
+      "title": "Submit timesheets",
+      "dateInterpretation": "Next upcoming Friday",
+      "timeInterpretation": "16:00",
+      "durationMinutes": 15,
+      "assumptions": ["Recurring 'every Friday' treated as single next occurrence", "Duration guessed as 15 min for an admin task"]
+    },
+    "difficulty": "medium",
+    "notes": "Recurrence + action phrase. Title extraction must strip 'remind me every friday at 4pm to'."
+  },
+  {
+    "category": "edge_cases",
+    "input": "tomorrow morning",
+    "expected": {
+      "title": "Event",
+      "dateInterpretation": "Tomorrow",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["No title found — used placeholder", "'Morning' resolved to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "hard",
+    "notes": "No title at all. Parser must handle empty title gracefully."
+  },
+  {
+    "category": "edge_cases",
+    "input": "dinner",
+    "expected": {
+      "title": "Dinner",
+      "dateInterpretation": "Today or tomorrow",
+      "timeInterpretation": "19:00",
+      "durationMinutes": 90,
+      "assumptions": ["No date found — defaulted to tomorrow", "Time inferred from 'dinner' as 19:00", "Duration guessed as 90 min"]
+    },
+    "difficulty": "hard",
+    "notes": "Single-word input. Absolute minimum viable input. Strong edge case."
+  },
+  {
+    "category": "edge_cases",
+    "input": "Schedule something for later",
+    "expected": {
+      "title": "Something",
+      "dateInterpretation": "Unknown — 'later' is unresolvable",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["'Later' is too vague to resolve — defaulted to tomorrow", "Time defaulted to 09:00", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "hard",
+    "notes": "Deliberately unresolvable temporal reference. Parser should note the vagueness explicitly in assumptions."
+  },
+  {
+    "category": "edge_cases",
+    "input": "asap",
+    "expected": {
+      "title": "Event",
+      "dateInterpretation": "Today",
+      "timeInterpretation": "Current time or next hour",
+      "durationMinutes": 60,
+      "assumptions": ["No title — used placeholder", "'ASAP' interpreted as today at next available hour", "Duration defaulted to 60 min"]
+    },
+    "difficulty": "hard",
+    "notes": "Should probably fail or require clarification. Tests parser resilience to non-parseable input."
+  },
+  {
+    "category": "edge_cases",
+    "input": "Lunch with the team on the last Friday of the month",
+    "expected": {
+      "title": "Lunch with the team",
+      "dateInterpretation": "The final Friday of the current month",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 60,
+      "assumptions": ["'Last Friday of the month' requires calendar arithmetic", "Time inferred from 'lunch' as 12:00"]
+    },
+    "difficulty": "hard",
+    "notes": "'Last Friday of the month' requires knowing the month layout. Rule-based will almost certainly fail this."
+  },
+  {
+    "category": "edge_cases",
+    "input": "Meet with Jake the day after the offsite",
+    "expected": {
+      "title": "Meet with Jake",
+      "dateInterpretation": "Unknown — references an external event",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["'Day after the offsite' cannot be resolved without context", "Defaulted to tomorrow as fallback"]
+    },
+    "difficulty": "hard",
+    "notes": "Reference to an external, unknown event. No parser can resolve this correctly. Should fail or flag dependency."
+  },
+  {
+    "category": "edge_cases",
+    "input": "birthday party",
+    "expected": {
+      "title": "Birthday party",
+      "dateInterpretation": "Unknown — no date signal",
+      "timeInterpretation": "18:00",
+      "durationMinutes": 120,
+      "assumptions": ["No date found — defaulted to tomorrow", "Time guessed as evening (18:00) for a party", "Duration guessed as 120 min"]
+    },
+    "difficulty": "medium",
+    "notes": "Two-word event with no temporal info. Tests social context inference."
+  },
+  {
+    "category": "edge_cases",
+    "input": "Move the 3pm meeting to 4pm",
+    "expected": {
+      "title": "Meeting",
+      "dateInterpretation": "Today (implied)",
+      "timeInterpretation": "16:00",
+      "durationMinutes": 60,
+      "assumptions": ["Rescheduling intent detected — treated as new event at 4pm", "Original 3pm event not modified (no edit capability)", "Date assumed today"]
+    },
+    "difficulty": "hard",
+    "notes": "Rescheduling command, not a creation command. Parser may misinterpret intent entirely. Should ideally surface an error or flag."
+  },
+  {
+    "category": "edge_cases",
+    "input": "Can you block some time for deep work next week?",
+    "expected": {
+      "title": "Deep work",
+      "dateInterpretation": "Midpoint of next week (Wednesday)",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 120,
+      "assumptions": ["'Some time' is vague — defaulted to 2 hours", "'Next week' resolved to Wednesday as midpoint", "Conversational phrasing stripped"]
+    },
+    "difficulty": "hard",
+    "notes": "Conversational phrasing with 'can you'. LLM handles this better; rule-based may fail to extract any useful fields."
+  },
+  {
+    "category": "edge_cases",
+    "input": "Quarterly business review",
+    "expected": {
+      "title": "Quarterly business review",
+      "dateInterpretation": "Unknown — no date signal",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 240,
+      "assumptions": ["No date found — defaulted to tomorrow", "Duration guessed as 4 hours for a quarterly review", "Time defaulted to 09:00"]
+    },
+    "difficulty": "hard",
+    "notes": "'Quarterly' implies scale but not a specific date. LLM may try to guess end-of-quarter; rule-based defaults to tomorrow."
+  },
+  {
+    "category": "edge_cases",
+    "input": "happy hour",
+    "expected": {
+      "title": "Happy hour",
+      "dateInterpretation": "Today or tomorrow",
+      "timeInterpretation": "17:00",
+      "durationMinutes": 90,
+      "assumptions": ["'Happy hour' culturally implies ~17:00–18:30", "No date found — defaulted to today or tomorrow", "Duration guessed as 90 min"]
+    },
+    "difficulty": "medium",
+    "notes": "Cultural idiom with implied time. LLM may infer 17:00; rule-based has no signal."
+  },
+  {
+    "category": "edge_cases",
+    "input": "fix the bug",
+    "expected": {
+      "title": "Fix the bug",
+      "dateInterpretation": "Unknown — no date signal",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60,
+      "assumptions": ["No date found — defaulted to tomorrow", "Time defaulted to 09:00", "Duration defaulted to 60 min", "Input is a task, not a calendar event"]
+    },
+    "difficulty": "hard",
+    "notes": "This is a task/todo, not a calendar event. Should probably fail or be categorised differently. Tests parser intent detection."
+  },
+  {
+    "category": "edge_cases",
+    "input": "!!!",
+    "expected": {
+      "title": "Event",
+      "dateInterpretation": "Unknown",
+      "timeInterpretation": "Unknown",
+      "durationMinutes": 60,
+      "assumptions": ["Input contains no parseable information", "All fields defaulted"]
+    },
+    "difficulty": "hard",
+    "notes": "Non-linguistic input. Parser must not crash. Should return a graceful fallback with all assumptions flagged."
+  },
+  {
+    "category": "edge_cases",
+    "input": "Lunch with the London team at 12 on the 31st of February",
+    "expected": {
+      "title": "Lunch with London team",
+      "dateInterpretation": "Invalid date — February 31st does not exist",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 60,
+      "assumptions": ["February 31st is an invalid date", "Parser should flag or reject the date", "Time and title parseable; date is the failure point"]
+    },
+    "difficulty": "hard",
+    "notes": "Deliberately invalid date. Parser must handle calendar impossibilities without crashing. Good robustness test."
+  }
+]

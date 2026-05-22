@@ -1,82 +1,105 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import type { CalendarEvent } from "@/types";
-import { parseCommand } from "@/lib/parseCommand";
+import type { CalendarEvent, ParsedDraft } from "@/types";
+import { RuleBasedParser, LLMParser } from "@/lib/parsers";
 import { loadEvents, saveEvents } from "@/lib/storage";
 import CommandInput from "@/components/CommandInput";
+import ParserModeSelector, { type ParserMode } from "@/components/ParserModeSelector";
 import DraftCard from "@/components/DraftCard";
+import CompareView from "@/components/CompareView";
 import EventList from "@/components/EventList";
 import styles from "./page.module.css";
+
+type DraftWithMeta = CalendarEvent & Pick<ParsedDraft, "source" | "confidence" | "assumptions">;
 
 function generateId(): string {
   return `evt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function parsedToEvent(parsed: ParsedDraft): DraftWithMeta {
+  return {
+    ...parsed,
+    id: generateId(),
+    status: "draft",
+    createdAt: new Date().toISOString(),
+  };
+}
+
 export default function HomePage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [draft, setDraft] = useState<CalendarEvent | null>(null);
+  const [mode, setMode] = useState<ParserMode>("rule-based");
+  const [draft, setDraft] = useState<DraftWithMeta | null>(null);
+  const [comparing, setComparing] = useState<{
+    ruleBased: ParsedDraft | null;
+    llm: ParsedDraft | null;
+    llmLoading: boolean;
+  } | null>(null);
+  const [parsing, setParsing] = useState(false);
 
-  useEffect(() => {
-    setEvents(loadEvents());
-  }, []);
+  useEffect(() => { setEvents(loadEvents()); }, []);
+  useEffect(() => { saveEvents(events); }, [events]);
 
-  useEffect(() => {
-    saveEvents(events);
-  }, [events]);
-
-  function handleCommand(input: string) {
-    const parsed = parseCommand(input);
-
-    const newDraft: CalendarEvent = {
-      ...parsed,
-      id: generateId(),
-      status: "draft",
-      createdAt: new Date().toISOString(),
-    };
-
-    setDraft(newDraft);
+  async function handleCommand(input: string) {
+    if (mode === "rule-based") {
+      setParsing(true);
+      const parsed = await RuleBasedParser.parse(input);
+      setDraft(parsedToEvent(parsed));
+      setParsing(false);
+    } else if (mode === "llm") {
+      setParsing(true);
+      const parsed = await LLMParser.parse(input);
+      setDraft(parsedToEvent(parsed));
+      setParsing(false);
+    } else {
+      const rbParsed = await RuleBasedParser.parse(input);
+      setComparing({ ruleBased: rbParsed, llm: null, llmLoading: true });
+      LLMParser.parse(input).then((llmParsed) => {
+        setComparing((prev) =>
+          prev ? { ...prev, llm: llmParsed, llmLoading: false } : null
+        );
+      });
+    }
   }
 
   function handleConfirm() {
     if (!draft) return;
-
-    const confirmed: CalendarEvent = {
-      ...draft,
-      status: "confirmed",
-    };
-
-    setEvents((prev) => [...prev, confirmed]);
+    setEvents((prev) => [...prev, { ...draft, status: "confirmed" }]);
     setDraft(null);
   }
 
   function handleDiscard() {
     setDraft(null);
+    setComparing(null);
+  }
+
+  function handleUseFromCompare(parsed: ParsedDraft) {
+    setDraft(parsedToEvent(parsed));
+    setComparing(null);
   }
 
   function handleDelete(id: string) {
     setEvents((prev) => prev.filter((e) => e.id !== id));
   }
 
+  const busy = parsing || !!draft || !!comparing;
+
   return (
-    <main className={styles.page}>
-      <div className={styles.container}>
+    <main className={styles.main}>
+      <div className={styles.inner}>
 
         <header className={styles.header}>
-          <h1 className={styles.title}>
-            Natural Language Calendar
-          </h1>
-
-          <p className={styles.subtitle}>
-            Type a command in plain English to create a calendar event.
-          </p>
+          <h1>Natural Language Calendar</h1>
+          <p>Type a command in plain English to create a calendar event.</p>
         </header>
 
         <section>
-          <CommandInput
-            onSubmit={handleCommand}
-            disabled={!!draft}
-          />
+          <span className={styles.sectionLabel}>Parser mode</span>
+          <ParserModeSelector mode={mode} onChange={setMode} disabled={busy} />
+        </section>
+
+        <section>
+          <CommandInput onSubmit={handleCommand} disabled={busy} loading={parsing} />
         </section>
 
         {draft && (
@@ -90,17 +113,26 @@ export default function HomePage() {
           </section>
         )}
 
-        <section className={styles.eventsSection}>
-          <div className={styles.eventsHeader}>
-            <h2 className={styles.eventsTitle}>
-              Confirmed Events
-            </h2>
-          </div>
+        {comparing && (
+          <section>
+            <CompareView
+              ruleBased={comparing.ruleBased}
+              llm={comparing.llm}
+              loading={comparing.llmLoading}
+              onUse={handleUseFromCompare}
+              onDiscard={handleDiscard}
+            />
+          </section>
+        )}
 
-          <EventList
-            events={events}
-            onDelete={handleDelete}
-          />
+        <section>
+          <div className={styles.eventsHeader}>
+            <span className={styles.eventsTitle}>Confirmed Events</span>
+            {events.length > 0 && (
+              <span className={styles.badge}>{events.length}</span>
+            )}
+          </div>
+          <EventList events={events} onDelete={handleDelete} />
         </section>
 
       </div>
