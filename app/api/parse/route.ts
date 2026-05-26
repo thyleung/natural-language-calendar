@@ -29,21 +29,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing input" }, { status: 400 });
   }
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 512,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: input }],
-  });
+  try {
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 512,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: input }],
+    });
 
-  const text = message.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { type: "text"; text: string }).text)
-    .join("");
+    const text = message.content
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { type: "text"; text: string }).text)
+      .join("");
 
-  // Strip any accidental markdown fences
-  const clean = text.replace(/```json|```/g, "").trim();
-  const parsed = JSON.parse(clean);
+    const clean = text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+    return NextResponse.json(parsed);
 
-  return NextResponse.json(parsed);
+  } catch (err) {
+    console.error("API route error:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }
