@@ -18,3 +18,9 @@ The interesting part quickly became ambiguity:
 - What does “Friday” mean?
 - Should “lunch” imply noon?
 - How much should the system assume?
+
+## Next Steps
+
+- Integrate Promptfoo for fixture-based parser evaluations
+- Add structured test cases for ambiguous scheduling language
+- Explore clarification flows for low-confidence parses
