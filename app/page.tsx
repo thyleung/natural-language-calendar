@@ -11,7 +11,11 @@ import CompareView from "@/components/CompareView";
 import EventList from "@/components/EventList";
 import styles from "./page.module.css";
 
-type DraftWithMeta = CalendarEvent & Pick<ParsedDraft, "source" | "confidence" | "assumptions">;
+type DraftWithMeta = CalendarEvent & {
+  source?: ParsedDraft["source"];
+  confidence?: ParsedDraft["confidence"];
+  assumptions?: ParsedDraft["assumptions"];
+};
 
 function generateId(): string {
   return `evt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;

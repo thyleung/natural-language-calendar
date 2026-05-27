@@ -713,5 +713,22 @@
     },
     "difficulty": "hard",
     "notes": "Deliberately invalid date. Parser must handle calendar impossibilities without crashing. Good robustness test."
+  },
+  {
+    "category": "relative_date",
+    "input": "Schedule a grooming appointment next week",
+    "expected": {
+      "title": "Grooming appointment",
+      "dateInterpretation": "Some day within next calendar week",
+      "timeInterpretation": "Default appointment time",
+      "durationMinutes": 60,
+      "assumptions": [
+        "'Next week' is ambiguous — exact day was not specified",
+        "Time defaulted",
+        "Duration defaulted to 60 min"
+      ]
+    },
+    "difficulty": "medium",
+    "notes": "Tests whether the parser handles vague future windows without pretending there is one exact correct day. This should be evaluated with a date-range assertion, not an exact expected date."
   }
 ]

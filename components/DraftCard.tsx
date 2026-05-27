@@ -4,7 +4,11 @@ import type { ReactNode } from "react";
 import type { CalendarEvent, ParsedDraft } from "@/types";
 import styles from "./DraftCard.module.css";
 
-type DraftWithMeta = CalendarEvent & Pick<ParsedDraft, "source" | "confidence" | "assumptions">;
+type DraftWithMeta = CalendarEvent & {
+  source?: ParsedDraft["source"];
+  confidence?: ParsedDraft["confidence"];
+  assumptions?: ParsedDraft["assumptions"];
+};
 
 interface Props {
   draft: DraftWithMeta;
