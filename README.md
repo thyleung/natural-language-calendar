@@ -1,36 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Natural Language Calendar
 
-## Getting Started
+Exploring how natural language can be turned into structured calendar events using rule-based parsing, LLMs, and Promptfoo.
 
-First, run the development server:
+🔗 Live Demo: https://natural-language-calendar.vercel.app/
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+<img width="591" height="800" alt="Screenshot 2026-05-27 at 5 09 48 PM" src="https://github.com/user-attachments/assets/6fe096b3-3f96-4b1d-a481-77c8dc102dde" />
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This app lets users type calendar commands like:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- “lunch friday”
+- “haircut after work”
+- “meeting in 30 minutes”
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+and compares how a rule-based parser and an LLM interpret them.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The interesting part quickly became ambiguity:
+- What does “Friday” mean?
+- Should “lunch” imply noon?
+- How much should the system assume?
