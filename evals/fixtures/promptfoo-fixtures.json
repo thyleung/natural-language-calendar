@@ -1,0 +1,137 @@
+[
+  {
+    "category": "explicit_date",
+    "input": "Schedule a dentist appointment on June 15th at 2pm",
+    "expected": {
+      "title": "Dentist appointment",
+      "dateInterpretation": "June 15th of the current year",
+      "timeInterpretation": "14:00",
+      "durationMinutes": 60
+    }
+  },
+  {
+    "category": "meetings",
+    "input": "Add team standup next Monday at 9am for 30 minutes",
+    "expected": {
+      "title": "Team standup",
+      "dateInterpretation": "The Monday of next week",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 30
+    }
+  },
+  {
+    "category": "relative_date",
+    "input": "Schedule a grooming appointment for Sophie in 2 weeks",
+    "expected": {
+      "title": "Grooming appointment for Sophie",
+      "dateInterpretation": "Today + 14 days",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60
+    }
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "lunch friday",
+    "expected": {
+      "title": "Lunch",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 60
+    }
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "lunch this friday",
+    "expected": {
+      "title": "Lunch",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 60
+    }
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "next friday lunch",
+    "expected": {
+      "title": "Lunch",
+      "timeInterpretation": "12:00",
+      "durationMinutes": 60
+    }
+  },
+  {
+    "category": "missing_time",
+    "input": "Call mom",
+    "expected": {
+      "title": "Call mom",
+      "durationMinutes": 30
+    }
+  },
+  {
+    "category": "missing_time",
+    "input": "Haircut after work",
+    "expected": {
+      "title": "Haircut",
+      "timeInterpretation": "17:30",
+      "durationMinutes": 45
+    }
+  },
+  {
+    "category": "missing_time",
+    "input": "Dinner with parents on Sunday",
+    "expected": {
+      "title": "Dinner with parents",
+      "timeInterpretation": "18:00",
+      "durationMinutes": 90
+    }
+  },
+  {
+    "category": "vague_duration",
+    "input": "meeting in 30 minutes",
+    "expected": {
+      "title": "Meeting",
+      "dateInterpretation": "Today, current time + 30 minutes",
+      "timeInterpretation": "Current time + 30 min",
+      "durationMinutes": 60
+    }
+  },
+  {
+    "category": "personal_tasks",
+    "input": "Remind me to call the bank tomorrow morning",
+    "expected": {
+      "title": "Call the bank",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 30
+    }
+  },
+  {
+    "category": "edge_cases",
+    "input": "tomorrow morning",
+    "expected": {
+      "title": "Event",
+      "timeInterpretation": "09:00",
+      "durationMinutes": 60
+    }
+  },
+  {
+    "category": "edge_cases",
+    "input": "dinner",
+    "expected": {
+      "title": "Dinner",
+      "timeInterpretation": "19:00",
+      "durationMinutes": 90
+    }
+  },
+  {
+    "category": "weekday_ambiguity",
+    "input": "coffee with Alex sometime next week",
+    "expected": {
+      "title": "Coffee with Alex"
+    }
+  },
+  {
+    "category": "relative_date",
+    "input": "Schedule a grooming appointment next week",
+    "expected": {
+      "title": "Grooming appointment",
+      "durationMinutes": 60
+    }
+  }
+]
