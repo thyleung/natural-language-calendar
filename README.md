@@ -21,6 +21,6 @@ The interesting part quickly became ambiguity:
 
 ## Next Steps
 
-- Integrate Promptfoo for fixture-based parser evaluations
-- Add structured test cases for ambiguous scheduling language
-- Explore clarification flows for low-confidence parses
+- Add Promptfoo evaluations for parser testing
+- Add more test cases for ambiguous scheduling commands
+- Explore when the app should ask questions instead of making assumptions
