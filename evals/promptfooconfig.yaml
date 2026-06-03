@@ -1,0 +1,55 @@
+description: Natural Language Calendar Parser Eval
+
+prompts:
+  - id: llm-parser
+    raw: |
+      You are a calendar event parser. Given a natural language command, extract event details and return ONLY a valid JSON object — no markdown, no explanation.
+
+      Today's date is {{today}}. Use this to resolve relative dates like "tomorrow", "next Monday", "in 2 weeks".
+
+      Current date and time is {{now}}.
+
+      Use today's date to resolve relative dates like:
+      - tomorrow
+      - next Monday
+      - in 2 weeks
+
+      Use the current date and time to resolve relative times like:
+      - in 30 minutes
+      - in 2 hours
+      - later today
+
+      When resolving relative times, return a concrete date and time.
+      Do not return placeholders such as "current_time+30min".
+
+      Return exactly this shape:
+      {
+        "title": string,
+        "date": string,            
+        "time": string,            
+        "duration": number,        
+        "notes": string,           
+        "confidence": number,      
+        "assumptions": string[],
+        "needsClarification": boolean,
+        "ambiguityLevel": "low" | "medium" | "high"  
+      }
+
+      Input: {{input}}
+
+providers:
+  - id: anthropic:messages:claude-sonnet-4-6
+    config:
+      max_tokens: 512
+
+tests: fixtures/promptfoo-fixtures.json
+
+defaultTest:
+  vars:
+    today: "2026-05-26"
+  assert:
+    - type: is-json
+    - type: javascript
+      value: |
+        const parsed = JSON.parse(output);
+        return typeof parsed.title === 'string' && parsed.title.length > 0;

@@ -1,137 +1,212 @@
 [
   {
-    "category": "explicit_date",
-    "input": "Schedule a dentist appointment on June 15th at 2pm",
-    "expected": {
-      "title": "Dentist appointment",
-      "dateInterpretation": "June 15th of the current year",
-      "timeInterpretation": "14:00",
-      "durationMinutes": 60
-    }
+    "description": "explicit_date: dentist appointment",
+    "vars": {
+      "input": "Schedule a dentist appointment on June 15th at 2pm"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'dentist appointment'" },
+      { "type": "javascript", "value": "JSON.parse(output).time === '14:00'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 60" }
+    ]
   },
   {
-    "category": "meetings",
-    "input": "Add team standup next Monday at 9am for 30 minutes",
-    "expected": {
-      "title": "Team standup",
-      "dateInterpretation": "The Monday of next week",
-      "timeInterpretation": "09:00",
-      "durationMinutes": 30
-    }
+    "description": "meetings: team standup",
+    "vars": {
+      "input": "Add team standup next Monday at 9am for 30 minutes"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'team standup'" },
+      { "type": "javascript", "value": "JSON.parse(output).time === '09:00'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 30" }
+    ]
   },
   {
-    "category": "relative_date",
-    "input": "Schedule a grooming appointment for Sophie in 2 weeks",
-    "expected": {
-      "title": "Grooming appointment for Sophie",
-      "dateInterpretation": "Today + 14 days",
-      "timeInterpretation": "09:00",
-      "durationMinutes": 60
-    }
+    "description": "medium_ambiguity: grooming appointment for Sophie in 2 weeks",
+    "vars": {
+      "input": "Schedule a grooming appointment for Sophie in 2 weeks"
+    },
+    "assert": [
+      { "type": "is-json" },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).title.toLowerCase() === 'grooming appointment for sophie'"
+      },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).needsClarification === true"
+      },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).ambiguityLevel === 'low'"
+      }
+    ]
   },
   {
-    "category": "weekday_ambiguity",
-    "input": "lunch friday",
-    "expected": {
-      "title": "Lunch",
-      "timeInterpretation": "12:00",
-      "durationMinutes": 60
-    }
+    "description": "weekday_ambiguity: lunch friday",
+    "vars": {
+      "input": "lunch friday"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'lunch'" },
+      { "type": "javascript", "value": "JSON.parse(output).time === '12:00'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 60" }
+    ]
   },
   {
-    "category": "weekday_ambiguity",
-    "input": "lunch this friday",
-    "expected": {
-      "title": "Lunch",
-      "timeInterpretation": "12:00",
-      "durationMinutes": 60
-    }
+    "description": "weekday_ambiguity: lunch this friday",
+    "vars": {
+      "input": "lunch this friday"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'lunch'" },
+      { "type": "javascript", "value": "JSON.parse(output).time === '12:00'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 60" }
+    ]
   },
   {
-    "category": "weekday_ambiguity",
-    "input": "next friday lunch",
-    "expected": {
-      "title": "Lunch",
-      "timeInterpretation": "12:00",
-      "durationMinutes": 60
-    }
+    "description": "weekday_ambiguity: next friday lunch",
+    "vars": {
+      "input": "next friday lunch"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'lunch'" },
+      { "type": "javascript", "value": "JSON.parse(output).time === '12:00'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 60" }
+    ]
   },
   {
-    "category": "missing_time",
-    "input": "Call mom",
-    "expected": {
-      "title": "Call mom",
-      "durationMinutes": 30
-    }
+    "description": "missing_time: call mom",
+    "vars": {
+      "input": "Call mom"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'call mom'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 30" }
+    ]
   },
   {
-    "category": "missing_time",
-    "input": "Haircut after work",
-    "expected": {
-      "title": "Haircut",
-      "timeInterpretation": "17:30",
-      "durationMinutes": 45
-    }
+    "description": "missing_time: dinner with parents on sunday",
+    "vars": {
+      "input": "Dinner with parents on Sunday"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'dinner with parents'" },
+      { "type": "javascript", "value": "const t = JSON.parse(output).time; t >= '18:00' && t <= '20:00'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 90" }
+    ]
   },
   {
-    "category": "missing_time",
-    "input": "Dinner with parents on Sunday",
-    "expected": {
-      "title": "Dinner with parents",
-      "timeInterpretation": "18:00",
-      "durationMinutes": 90
-    }
+    "description": "vague_duration: meeting in 30 minutes",
+    "vars": {
+      "input": "meeting in 30 minutes",
+      "now": "2026-05-26T15:30:00"
+    },
+    "assert": [
+      { "type": "is-json" },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).title.toLowerCase() === 'meeting'"
+      },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).date === '2026-05-26'"
+      },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).time === '16:00'"
+      },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).duration === 60"
+      }
+    ]
   },
   {
-    "category": "vague_duration",
-    "input": "meeting in 30 minutes",
-    "expected": {
-      "title": "Meeting",
-      "dateInterpretation": "Today, current time + 30 minutes",
-      "timeInterpretation": "Current time + 30 min",
-      "durationMinutes": 60
-    }
+    "description": "personal_tasks: call the bank tomorrow morning",
+    "vars": {
+      "input": "Remind me to call the bank tomorrow morning"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'call the bank'" },
+      { "type": "javascript", "value": "JSON.parse(output).time === '09:00'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 30" }
+    ]
   },
   {
-    "category": "personal_tasks",
-    "input": "Remind me to call the bank tomorrow morning",
-    "expected": {
-      "title": "Call the bank",
-      "timeInterpretation": "09:00",
-      "durationMinutes": 30
-    }
+    "description": "edge_case: tomorrow morning (no title)",
+    "vars": {
+      "input": "tomorrow morning"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).time === '09:00'" },
+      { "type": "javascript", "value": "typeof JSON.parse(output).title === 'string' && JSON.parse(output).title.length > 0" },
+      {
+        "type": "llm-rubric",
+        "value": "The assumptions array should note that no title was found in the input"
+      }
+    ]
   },
   {
-    "category": "edge_cases",
-    "input": "tomorrow morning",
-    "expected": {
-      "title": "Event",
-      "timeInterpretation": "09:00",
-      "durationMinutes": 60
-    }
+    "description": "clarification_required: dinner",
+    "vars": {
+      "input": "dinner"
+    },
+    "assert": [
+      { "type": "is-json" },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).title.toLowerCase() === 'dinner'"
+      },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).needsClarification === true"
+      },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).ambiguityLevel === 'high'"
+      }
+    ]
   },
   {
-    "category": "edge_cases",
-    "input": "dinner",
-    "expected": {
-      "title": "Dinner",
-      "timeInterpretation": "19:00",
-      "durationMinutes": 90
-    }
+    "description": "clarification_required: coffee with Alex sometime next week",
+    "vars": {
+      "input": "coffee with Alex sometime next week"
+    },
+    "assert": [
+      { "type": "is-json" },
+      {
+        "type": "javascript",
+        "value": "JSON.parse(output).title.toLowerCase() === 'coffee with alex'"
+      },
+      {
+        "type": "llm-rubric",
+        "value": "The output should recognize that 'sometime next week' is vague. It should not present the chosen date and time as certain. The assumptions should clearly mention that the exact day and time were not specified, and the result should suggest that clarification may be needed."
+      }
+    ]
   },
   {
-    "category": "weekday_ambiguity",
-    "input": "coffee with Alex sometime next week",
-    "expected": {
-      "title": "Coffee with Alex"
-    }
-  },
-  {
-    "category": "relative_date",
-    "input": "Schedule a grooming appointment next week",
-    "expected": {
-      "title": "Grooming appointment",
-      "durationMinutes": 60
-    }
+    "description": "relative_date: grooming appointment next week (vague)",
+    "vars": {
+      "input": "Schedule a grooming appointment next week"
+    },
+    "assert": [
+      { "type": "is-json" },
+      { "type": "javascript", "value": "JSON.parse(output).title.toLowerCase() === 'grooming appointment'" },
+      { "type": "javascript", "value": "JSON.parse(output).duration === 60" },
+      {
+        "type": "llm-rubric",
+        "value": "The date should fall within next calendar week (2026-06-01 to 2026-06-07). The assumptions array should acknowledge the date was not specified precisely."
+      }
+    ]
   }
 ]
